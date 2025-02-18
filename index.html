@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Рулетка общения с голосовыми звонками</title>
+    <style>
+        /* Общие стили */
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f0f0f0; /* Светлый фон по умолчанию */
+            color: #333;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .chat-box {
+            width: 350px;
+            height: 550px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: background-color 0.3s;
+        }
+
+        .nickname-input {
+            display: flex;
+            justify-content: center;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .nickname-input input {
+            width: 80%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 15px;
+            background-color: #f9f9f9;
+            overflow-y: auto;
+            border-bottom: 2px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            background-color: #e4e4e4;
+            padding: 12px;
+            border-radius: 8px;
+            max-width: 80%;
+            color: #333;
+            transition: background-color 0.3s;
+        }
+
+        .message:hover {
+            background-color: #d4d4d4;
+        }
+
+        .message span {
+            font-weight: bold;
+            color: #007BFF;
+        }
+
+        .input-box {
+            display: flex;
+            border-top: 2px solid #ddd;
+            padding: 10px;
+        }
+
+        .input-box input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-box input:focus {
+            border-color: #007BFF;
+        }
+
+        .input-box button {
+            padding: 10px 15px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .input-box button:hover {
+            background-color: #0056b3;
+        }
+
+        .disconnect-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #FF5733;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .disconnect-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .theme-toggle-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .theme-toggle-btn:hover {
+            background-color: #555;
+        }
+
+        /* Для отображения кнопок звонка */
+        .call-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+
+        .call-btn {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .call-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Темная тема */
+        body.dark-mode {
+            background: #333;
+            color: #fff;
+        }
+
+        body.dark-mode .chat-box {
+            background-color: #444;
+        }
+
+        body.dark-mode .messages {
+            background-color: #555;
+        }
+
+        body.dark-mode .message {
+            background-color: #666;
+            color: #fff;
+        }
+
+        body.dark-mode .message:hover {
+            background-color: #777;
+        }
+
+        body.dark-mode .message span {
+            color: #66ccff;
+        }
+
+        body.dark-mode .input-box {
+            background-color: #333;
+        }
+
+        body.dark-mode .input-box input {
+            background-color: #555;
+            color: #fff;
+            border: 1px solid #888;
+        }
+
+        body.dark-mode .input-box button {
+            background-color: #007BFF;
+        }
+
+        body.dark-mode .disconnect-btn {
+            background-color: #FF5733;
+        }
+
+        body.dark-mode .theme-toggle-btn {
+            background-color: #444;
+        }
+
+        @media (max-width: 500px) {
+            .chat-box {
+                width: 100%;
+                height: 100%;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="chat-box">
+            <div class="nickname-input">
+                <input type="text" id="nicknameInput" placeholder="Введите ваш никнейм...">
+            </div>
+            <div class="messages" id="messages"></div>
+            <div class="input-box">
+                <input type="text" id="messageInput" placeholder="Введите сообщение...">
+                <button onclick="sendMessage()">Отправить</button>
+            </div>
+            <div class="call-buttons">
+                <button class="call-btn" id="callButton" onclick="startCall()" disabled>Позвонить</button>
+                <button class="call-btn" id="endCallButton" onclick="endCall()" disabled>Закончить звонок</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="disconnect-btn" onclick="disconnectChat()">Отключиться</button>
+    <button class="theme-toggle-btn" onclick="toggleTheme()">Темная/Светлая тема</button>
+
+    <script>
+        let chatPartner = null;
+        let userNickname = '';
+        let localStream = null;
+        let remoteStream = null;
+        let peerConnection = null;
+        let isInCall = false;
+
+        // Получение никнейма
+        function setNickname() {
+            const nicknameInput = document.getElementById('nicknameInput').value.trim();
+            if (nicknameInput !== '') {
+                userNickname = nicknameInput;
+                document.getElementById('nicknameInput').disabled = true;
+                document.getElementById('nicknameInput').placeholder = `Никнейм: ${userNickname}`;
+                connectRandomChat();
+                document.getElementById('callButton').disabled = false; // Включаем кнопку звонка
+            }
+        }
+
+        // Добавление сообщений в чат
+        function appendMessage(sender, message) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.innerHTML = `<span>${sender}:</span> ${message}`;
+            document.getElementById('messages').appendChild(messageElement);
+            document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+        }
+
+        // Отправка сообщений
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (message !== '') {
+                appendMessage(userNickname || 'Вы', message);
+                input.value = ''; // Очистка поля ввода
+                // Передаем сообщение собеседнику (здесь используется имитация)
+                if (chatPartner) {
+                    chatPartner.receiveMessage(userNickname || 'Собеседник', message);
+                }
+            }
+        }
+
+        // Инициализация подключения к случайному собеседнику
+        function connectRandomChat() {
+            if (!userNickname) return;
+            chatPartner = {
+                receiveMessage: function (sender, message) {
+                    setTimeout(() => {
+                        appendMessage(sender, message);
+                    }, Math.random() * 2000); // Имитация задержки для собеседника
+                }
+            };
+            appendMessage('Система', `Вы подключены как ${userNickname}!`);
+        }
+
+        // Отключение от чата
+        function disconnectChat() {
+            chatPartner = null;
+            appendMessage('Система', 'Вы отключены от собеседника.');
+            setTimeout(() => {
+                appendMessage('Система', 'Подключаем нового собеседника...');
+                setTimeout(() => {
+                    setNickname(); // Автоматически подключаем нового собеседника
+                }, 2000);
+            }, 2000);
+        }
+
+        // Переключение между темной и светлой темой
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+        }
+
+        // Начало звонка
+        async function startCall() {
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            document.getElementById('callButton').disabled = true; // Отключаем кнопку звонка
+            document.getElementById('endCallButton').disabled = false; // Включаем кнопку завершения звонка
+
+            // Настроим соединение WebRTC
+            peerConnection = new RTCPeerConnection();
+
+            // Добавляем локальный поток в peerConnection
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
+
+            // Обработка получения удаленного потока
+            peerConnection.ontrack = (event) => {
+                if (!remoteStream) {
+                    remoteStream = new MediaStream();
+                    const remoteAudio = new Audio();
+                    remoteAudio.srcObject = remoteStream;
+                    remoteAudio.play();
+                }
+                remoteStream.addTrack(event.track);
+            };
+
+            // Создание offer (запрос на соединение)
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+
+            // Здесь можно отправить offer на сервер или обменяться данными с собеседником через signaling сервер
+            // Но для простоты в данном примере пропустим этот шаг.
+        }
+
+        // Завершение звонка
+        function endCall() {
+            if (peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+                remoteStream = null;
+            }
+
+            document.getElementById('callButton').disabled = false; // Включаем кнопку звонка
+            document.getElementById('endCallButton').disabled = true; // Отключаем кнопку завершения звонка
+        }
+
+        // Подключение при вводе никнейма
+        document.getElementById('nicknameInput').addEventListener('blur', setNickname);
+
+    </script>
+
+</body>
+</html>
